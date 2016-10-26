@@ -16,45 +16,9 @@ Set-DscLocalConfigurationManager -Path "$setupFolder\LCM_RebootNodeIfNeeded" -Ve
 Write-Log "INFO" "Finished updating LocalConfigurationManager with RebootNodeIfNeeded"
 
 #######################################
-# Install modules
-#######################################
-$modulesPath = Join-Path -Path $setupFolder -ChildPath 'Modules'
-if (Test-Path -Path $modulesPath -PathType Container) {
-    $destination = Join-Path -Path $env:ProgramFiles -ChildPath 'WindowsPowerShell\Modules'
-    Write-Log "INFO" "installing modules from '$modulesPath' to '$destination'"
-    Get-ChildItem -Path "$modulesPath\*" -include '*.nupkg','*.zip' |% {
-        if ($_.BaseName -match '(?<name>\D*)\.(?<version>\d*.\d*(.\d*(.\d*)?)?)') {
-            Write-Log "INFO" "Installing module '$($_.BaseName)'"
-            if ([System.IO.Path]::GetExtension($_.FullName) -ne '.zip') {
-                $zipFilePath = Join-Path -Path $_.Directory -ChildPath "$($_.BaseName).zip"
-                Rename-Item -Path $_.FullName -NewName $zipFilePath
-            }
-            else {
-                $zipFilePath = $_.FullName
-            }
-
-            $destinationPath = Join-Path -Path $destination -ChildPath "$($Matches.name)\$($Matches.version)"
-            New-Item -Path $destinationPath -ItemType Directory -Force | Out-Null
-            Expand-Archive -Path $zipFilePath -DestinationPath $destinationPath -Force
-
-            get-childitem -path $destinationPath |? { $_.BaseName -in 'package', '_rels','[Content_Types]' } | Remove-Item -Recurse -Force
-
-            if ($zipFilePath -ne $_.FullName) {
-                Rename-Item -Path $zipFilePath -NewName $_.FullName
-            }
-        }
-    }
-}
-else {
-    Write-Log "INFO" "Modules path '$modulesPath' not found"
-}
-
-
-#######################################
 # Apply configuration
 #######################################
 $dscFilePath = Join-Path -Path $setupFolder -ChildPath 'HyperVLabEnvironment.ps1'
-$configurationData = @{}
 if (Test-Path -Path $dscFilePath) {
     Write-Log "INFO" "Start applying configuration"
     Write-Log "INFO" "Preparing configuration for DSC"
@@ -63,7 +27,11 @@ if (Test-Path -Path $dscFilePath) {
         | Add-Member -MemberType NoteProperty -Name PSDscAllowPlainTextPassword -Value $true `
         | Add-Member -MemberType NoteProperty -Name PSDscAllowDomainUser -Value $true
 
-    $configurationData.AllNodes = @((Convert-PSObjectToHashtable $configuration))
+    $configurationData = @{
+        AllNodes = @(
+            (Convert-PSObjectToHashtable $configuration)
+        )
+    }
 
     Write-Log "INFO" "Loading configuration"
     . $dscFilePath

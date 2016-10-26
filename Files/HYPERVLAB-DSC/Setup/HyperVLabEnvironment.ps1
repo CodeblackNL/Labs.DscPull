@@ -274,12 +274,20 @@ Configuration HyperVLabEnvironment {
             $Node.Environment.Host.Share -and
             $Node.Environment.Host.Share.UserName -and
             $Node.Environment.Host.Share.Password) {
+
+            $hostName = $Node.Environment.Host.Name
             $sharePath = "\\$($Node.Environment.Host.Name)\$($Node.Environment.Host.Share.Name)"
-            $shareCredential = New-Object -TypeName PSCredential -ArgumentList "$($Node.Environment.Host.Name)\$($Node.Environment.Host.Share.UserName)",$Node.Environment.Host.Share.Password
+            if ($Node.Environment.Host.Share.Password -is [SecureString] ){
+                $sharePassword = $Node.Environment.Host.Share.Password
+            }
+            else {
+                $sharePassword = (ConvertTo-SecureString -String "$($Node.Environment.Host.Share.Password)" -AsPlainText -Force)
+            }
+            $shareCredential = New-Object -TypeName PSCredential -ArgumentList "$($Node.Environment.Host.Name)\$($Node.Environment.Host.Share.UserName)",$sharePassword
         }
 
         CommonServer CommonServer {
-            ShareHostName = $Node.Environment.Host.Name
+            ShareHostName = $hostName
             ShareCredential = $shareCredential
         }
 
