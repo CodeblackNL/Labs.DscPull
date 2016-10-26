@@ -1,12 +1,5 @@
 
 #######################################
-# Load configuration
-#######################################
-Write-Log "INFO" "Loading configuration"
-$configuration = Get-content -Path "$setupFolder\configuration.json" -Raw | ConvertFrom-Json
-Write-Log "INFO" "Finished loading configuration"
-
-#######################################
 # Update LocalConfigurationManager
 #######################################
 Write-Log "INFO" "Updating LocalConfigurationManager with RebootNodeIfNeeded"
@@ -60,9 +53,9 @@ else {
 #######################################
 # Apply configuration
 #######################################
-$configurationFilePath = Join-Path -Path $setupFolder -ChildPath 'HyperVLabEnvironment.ps1'
+$dscFilePath = Join-Path -Path $setupFolder -ChildPath 'HyperVLabEnvironment.ps1'
 $configurationData = @{}
-if (Test-Path -Path $configurationFilePath) {
+if (Test-Path -Path $dscFilePath) {
     Write-Log "INFO" "Start applying configuration"
     Write-Log "INFO" "Preparing configuration for DSC"
     $configuration `
@@ -73,9 +66,9 @@ if (Test-Path -Path $configurationFilePath) {
     $configurationData.AllNodes = @((Convert-PSObjectToHashtable $configuration))
 
     Write-Log "INFO" "Loading configuration"
-    . $configurationFilePath
+    . $dscFilePath
     Write-Log "INFO" "Generating configuration"
-    $outputPath = Join-Path -Path $setupFolder -ChildPath 'HyperVLabEnvironment'
+    $outputPath = Join-Path -Path $PSScriptRoot -ChildPath "$([System.IO.Path]::GetFileNameWithoutExtension($dscFilePath))_DSC"
     HyperVLabEnvironment -ConfigurationData $configurationData -OutputPath $outputPath | Out-Null
     Write-Log "INFO" "Starting configuration"
     Start-DscConfiguration –Path $outputPath –Wait -Force –Verbose | Out-Null

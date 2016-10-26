@@ -270,11 +270,15 @@ Configuration HyperVLabEnvironment {
             + Apply this configuration
         #>
 
-        $sharePath = "\\$($Node.Environment.Host.Name)\$($Node.Environment.Host.Share.Name)"
-        $sharePassword = ConvertTo-SecureString -String 'P@ssw0rd!' -Force -AsPlainText
-        $shareCredential = New-Object -TypeName PSCredential -ArgumentList "$($Node.Environment.Host.Name)\$($Node.Environment.Host.Share.UserName)",$sharePassword
-
-        $registrationKey = '89fd343d-194d-49ad-bc00-7a5b8705f943'
+        if ($Node.Environment.Host -and
+            $Node.Environment.Host.Share -and
+            $Node.Environment.Host.Share.UserName -and
+            $Node.Environment.Host.Share.Password -and
+            $Node.Environment.Host.Share.PasswordType -eq 'PlainText') {
+            $sharePath = "\\$($Node.Environment.Host.Name)\$($Node.Environment.Host.Share.Name)"
+            $sharePassword = ConvertTo-SecureString -String $Node.Environment.Host.Share.Password -Force -AsPlainText
+            $shareCredential = New-Object -TypeName PSCredential -ArgumentList "$($Node.Environment.Host.Name)\$($Node.Environment.Host.Share.UserName)",$sharePassword
+        }
 
         CommonServer CommonServer {
             ShareHostName = $Node.Environment.Host.Name
@@ -294,7 +298,7 @@ Configuration HyperVLabEnvironment {
 
         if ($Node.Role -contains 'DscPullServer') {
             DscPullServer DscPullServer {
-                RegistrationKey = $registrationKey
+                RegistrationKey = $Node.AllProperties.DscPullServerRegistrationKey
                 DependsOn = '[CommonServer]CommonServer'
             }
         }

@@ -1,12 +1,5 @@
 
 #######################################
-# Load configuration
-#######################################
-Write-Log "INFO" "Loading configuration"
-$configuration = Get-content -Path "$setupFolder\configuration.json" -Raw | ConvertFrom-Json
-Write-Log "INFO" "Finished loading configuration"
-
-#######################################
 # Update LocalConfigurationManager
 #######################################
 Write-Log "INFO" "Updating LocalConfigurationManager with RebootNodeIfNeeded"
