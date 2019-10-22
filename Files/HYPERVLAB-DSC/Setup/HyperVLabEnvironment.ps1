@@ -42,6 +42,15 @@
                     DependsOn      = "[xIPAddress]Network_$($network.Name)"
                 }
             }
+
+            if ($networkAdapter.DefaultGateway) {
+                xDefaultGatewayAddress "xDefaultGatewayAddress_$($networkAdapter.Network.Name)" {
+                    InterfaceAlias = $network.Name
+                    AddressFamily  = $network.AddressFamily
+                    Address        = $networkAdapter.DefaultGateway
+                    DependsOn      = "[xIPAddress]Network_$($network.Name)"
+                }
+            }
         }
         else {
             xDhcpClient "EnableDHCP_$($network.Name)" {
@@ -56,6 +65,7 @@
         Ensure                 = 'Present' 
         UserAuthentication     = 'Secure'
     }
+
     xFirewall AllowRDP {
         Ensure                 = 'Present'
         Name                   = 'RemoteDesktop-UserMode-In-TCP'
